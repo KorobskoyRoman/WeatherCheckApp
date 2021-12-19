@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import CoreLocation
 
 class ViewController: UIViewController {
     
@@ -15,9 +16,15 @@ class ViewController: UIViewController {
     @IBOutlet var searchTextField: UITextField!
     
     var weatherManager = WeatherManager()
+    let locationManager = CLLocationManager()
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.requestLocation()
+        
         weatherManager.delegate = self
         setupTextField()
     }
@@ -32,6 +39,9 @@ class ViewController: UIViewController {
         searchTextField.endEditing(true)
     }
     
+    @IBAction func locationPressed(_ sender: UIButton) {
+        locationManager.requestLocation()
+    }
 }
 
 extension ViewController: UITextFieldDelegate {
@@ -68,6 +78,21 @@ extension ViewController: WeatherManagerDelegate {
     }
     
     func didFailWithError(error: Error) {
+        print(error.localizedDescription)
+    }
+}
+
+extension ViewController: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let locations = locations.last {
+            locationManager.stopUpdatingLocation()
+            let lat = locations.coordinate.latitude
+            let lon = locations.coordinate.longitude
+            weatherManager.fetchWeatherCoords(latitude: lat, longitude: lon)
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print(error.localizedDescription)
     }
 }
